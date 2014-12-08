@@ -1,0 +1,158 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<div class="col-md-12">
+    <div class="panel panel-default">
+        <div class="panel-heading"><label>Opciones</label></div>
+        <div class="panel-body">
+            <div class="col-md-2">
+                <label>Color: </label>
+                <input type='text' id="color" />
+            </div>
+            <div class="col-md-2">
+                <label>Tamaño: </label>
+                <div id="size" style=""></div>
+            </div>
+            <div class="col-md-2">
+                <button id="clear" class="btn btn-danger btn-block btn-lg">Do it!</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<canvas id="testCanvas" width="1140" height="600"></canvas>
+
+
+
+@section scripts{    
+<script src="@Url.Content("~/Content/spectrum/spectrum.js")"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var myCanvas = $('#testCanvas');
+
+        myCanvas.css('background-color', '#333');
+        myCanvas.css('border-radius', '4px');
+        
+        if (myCanvas) {
+            var isDown = false;
+            var ctx = myCanvas[0].getContext("2d");
+            var canvasX, canvasY;
+            ctx.lineWidth = 30;
+            ctx.lineJoin = ctx.lineCap = 'round';
+            ctx.strokeStyle = "#e36";
+
+            $(myCanvas)
+            .mousedown(function (e) {
+                isDown = true;
+                startPoint(e.pageX - myCanvas[0].offsetLeft, e.pageY - myCanvas[0].offsetTop);
+            })
+            .mousemove(function (e) {
+                if (isDown != false) {
+                    ctx.lineTo(e.pageX - myCanvas[0].offsetLeft, e.pageY - myCanvas[0].offsetTop);
+                    ctx.stroke();
+                }
+            });
+
+            $(document).mouseup(function (e) {
+                isDown = false;
+            });
+
+            // start and draw points
+            function startPoint(x, y) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            };
+
+            function drawPoint(x, y, color) {
+                ctx.strokeStyle = color;
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            };
+            
+            // clear canvas
+            function clearCanvas() {
+                ctx.clearRect(0, 0, myCanvas[0].width, myCanvas[0].height);
+            }
+
+            $("#clear").click(function () {
+                clearCanvas();
+            });
+
+            // change size
+            var changeSize = function (value) {
+                ctx.lineWidth = value;
+            };
+            
+            // color picker
+            $("#color").spectrum({
+                color: "#e36",
+                change: function (color) {                    
+                    ctx.strokeStyle = color.toHexString();
+                }
+            });
+
+            // slider
+            $("#size").slider({
+                orientation: "horizontal",
+                range: "min",
+                max: 50,
+                value: ctx.lineWidth
+            });
+
+            $("#size").on("slide", function (event, ui) {
+                changeSize(ui.value);
+            });
+
+            // signalR code
+            $.connection.hub.logging = false;
+
+            var hub = $.connection.drawingBoard;
+            var connected = false;
+
+            // UI
+            $("#color").on('change.spectrum', function (e, color) {
+                hub.state.color = color.toHexString();
+            });
+            
+            $(myCanvas).mousedown(function (e) {
+                if (connected) {
+                    hub.server.startBroadcastPoint(e.pageX - myCanvas[0].offsetLeft, e.pageY - myCanvas[0].offsetTop);
+                }
+            })
+            .mousemove(function (e) {
+                if (isDown && connected) {
+                    hub.server.broadcastPoint(e.pageX - myCanvas[0].offsetLeft, e.pageY - myCanvas[0].offsetTop);
+                }
+            });
+
+            $("#clear").click(function () {
+                if (connected) {
+                    hub.server.broadcastClear();
+                }
+            });
+
+            // Event handlers
+            hub.client.clear = function () {
+                clearCanvas();
+            };
+
+            hub.client.startPoint = function (dx, dy) {
+                startPoint(dx, dy);
+            };
+            
+            hub.client.drawPoint = function (dx, dy, dcolor) {
+                drawPoint(dx, dy, dcolor);
+            };
+
+            // Starts the connection!            
+            $.connection.hub.start()
+            .done(function () {
+                connected = true;
+            });
+        }
+
+    });
+</script>
+}
