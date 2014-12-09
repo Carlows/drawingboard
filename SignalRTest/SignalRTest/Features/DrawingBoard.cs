@@ -12,11 +12,11 @@ namespace SignalRTest.Features
     public class DrawingBoard : Hub
     {
         private static int _usersCount = 0;
-        private static ConcurrentStack<Line> _points = GetEmptyPoints();
+        private static ConcurrentQueue<Line> _points = GetEmptyPoints();
 
-        private static ConcurrentStack<Line> GetEmptyPoints()
+        private static ConcurrentQueue<Line> GetEmptyPoints()
         {
-            var points = new ConcurrentStack<Line>();
+            var points = new ConcurrentQueue<Line>();
             return points;
         }
 
@@ -42,15 +42,14 @@ namespace SignalRTest.Features
                  color = color,
                  size = size
             };
-
-            _points.Push(newLine);
+            _points.Enqueue(newLine);
 
             return Clients.Others.DrawArray(array, color, size);
         }
 
         public Task BroadcastClear()
         {
-            _points.Clear();
+            _points = GetEmptyPoints();
             return Clients.Others.Clear();
         }
     }

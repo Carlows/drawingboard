@@ -60,7 +60,7 @@
             })
             .mousemove(function (e) {
                 if (isDown != false) {
-                    if (coordinates.length < 120) {
+                    if (coordinates.length < 200) {
                         coordinates.push({ x: e.pageX - myCanvas[0].offsetLeft, y: e.pageY - myCanvas[0].offsetTop });
                     }
                     drawArray(coordinates, colorPicker.spectrum('get').toHexString(), sizeElement.slider( "option", "value" ));
@@ -105,7 +105,8 @@
             $("#size").slider({
                 orientation: "horizontal",
                 range: "min",
-                max: 50,
+                min: 1,
+                max: 80,
                 value: ctx.lineWidth
             });
 
