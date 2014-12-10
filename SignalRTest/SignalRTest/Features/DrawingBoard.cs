@@ -31,7 +31,10 @@ namespace SignalRTest.Features
 
         public override Task OnDisconnected(bool stopCalled)
         {
-            Interlocked.Decrement(ref _usersCount);
+            if (_usersCount > 0)
+            {
+                Interlocked.Decrement(ref _usersCount);
+            }
             return Clients.All.UpdateClientCount(_usersCount);
         }
         
@@ -51,6 +54,13 @@ namespace SignalRTest.Features
         {
             _points = GetEmptyPoints();
             return Clients.Others.Clear();
+        }
+
+        public Task BroadcastMessage(string message)
+        {
+            var name = Clients.Caller.name;
+
+            return Clients.Others.AddMessage(name, message);
         }
     }
 

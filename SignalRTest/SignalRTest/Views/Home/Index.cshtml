@@ -2,10 +2,29 @@
     ViewBag.Title = "Home Page";
 }
 
+@section styles{
+    <style>
+        .chat{
+            height:200px;
+            overflow-y:auto;
+        }
+        .custom-quote {
+            font-size: 14.5px;
+            margin: 0 0 4px;
+        }
+        .blue {
+            border-left: 5px solid #00aedb;
+        }
+        .red {
+            border-left: 5px solid #d11141;
+        }
+    </style>
+}
+
 <div class="col-md-4">
     <div class="panel panel-default">
-        <div class="panel-heading">
-            <label>Opciones</label>
+        <div class="panel-heading text-center">
+            <label>Options</label>
         </div>
         <div class="panel-body">
             <form class="form-horizontal">
@@ -14,18 +33,44 @@
                     <input type='text' id="color" />
                 </div>
                 <div class="form-group col-md-12">
-                    <label class="control-label">Tamaño:</label>
+                    <label class="control-label">Brush size:</label>
                     <div id="size"></div>
                 </div>
                 <div class="form-group col-md-8">
-                    <label class="control-label">Reiniciar: </label>
+                    <label class="control-label">Reset: </label>
                     <div id="clear" class="btn btn-danger">Do it!</div>
+                </div>
+                <div class="form-group col-md-12">
+                    <div class="col-md-4">
+                        <label class="control-label">Name: </label>
+                    </div>
+                    <div class="col-md-8">
+                        <input type="text" class="form-control" id="nombre" />
+                    </div>
                 </div>
             </form>
         </div>
         <div class="panel-footer">
-            <div class="form-group" style="margin:0px;">
-                <label>Usuarios conectados: <span id="usuariosConectados">0</span></label>
+            <div class="form-group text-center" style="margin:0px;">
+                <label>Users connected: <span id="usuariosConectados">0</span></label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="col-md-8">
+    <div class="panel panel-default">
+        <div class="panel-heading text-center">
+            <label>WOW, A CHAT!</label>
+        </div>
+        <div class="panel-body" style="padding:15px 0 15px 0;">
+            <div id="chat" class="container-fluid chat" style="margin-bottom:20px;">                  
+            </div>
+            <div class="col-md-10" style="padding-right:0px;">
+                <input type="text" id="textMessage" class="form-control" style="max-width:inherit; border-radius: 4px 0px 0px 4px;" />
+            </div>
+            <div class="col-md-2" style="padding-left:0px;">
+                <div id="sendMessage" class="btn btn-primary btn-block" style="border-radius: 0px 4px 4px 0px;">Enviar</div>
             </div>
         </div>
     </div>
@@ -33,130 +78,227 @@
 
 <canvas id="testCanvas" width="1140" height="600"></canvas>
 
-@section scripts{    
-<script src="@Url.Content("~/Content/spectrum/spectrum.js")"></script>
+@section scripts{
+    <script src="@Url.Content("~/Content/spectrum/spectrum.js")"></script>    
+    <script src="~/Scripts/debounce.js"></script>
 
-<script type="text/javascript">
-    $(document).ready(function () {
-        var myCanvas = $('#testCanvas');
-        var colorPicker = $("#color");
-        var sizeElement = $("#size");
-        var usuariosLabel = $("#usuariosConectados");
-        myCanvas.css('background-color', '#333');
-        myCanvas.css('border-radius', '4px');
-        
-        if (myCanvas) {
-            var isDown = false, coordinates = [];
-            var ctx = myCanvas[0].getContext("2d");
-            var canvasX, canvasY;
-            ctx.lineWidth = 30;
-            ctx.lineJoin = ctx.lineCap = 'round';
-            ctx.strokeStyle = "#e36";
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var myCanvas = $('#testCanvas');
+            var colorPicker = $("#color");
+            var sizeElement = $("#size");
+            var usuariosLabel = $("#usuariosConectados");
+            var chatBox = $("#chat");
+            var chatBtn = $("#sendMessage");
+            var chatText = $("#textMessage");
+            var textNombre = $("#nombre");
 
-            $(myCanvas)
-            .mousedown(function (e) {
-                isDown = true;
-                coordinates.push({ x: e.pageX - myCanvas[0].offsetLeft, y: e.pageY - myCanvas[0].offsetTop });
-            })
-            .mousemove(function (e) {
-                if (isDown != false) {
-                    if (coordinates.length < 200) {
-                        coordinates.push({ x: e.pageX - myCanvas[0].offsetLeft, y: e.pageY - myCanvas[0].offsetTop });
+            var nombre = "Anonymous.";
+            textNombre.val(nombre);
+
+            myCanvas.css('background-color', '#333');
+            myCanvas.css('border-radius', '4px');
+
+            if (myCanvas) {
+                var isDown = false, coordinates = [];
+                var ctx = myCanvas[0].getContext("2d");
+                var canvasX, canvasY;
+                ctx.lineWidth = 30;
+                ctx.lineJoin = ctx.lineCap = 'round';
+                ctx.strokeStyle = "#e36";
+
+                $(myCanvas)
+                .mousedown(function (e) {
+                    isDown = true;
+                    coordinates.push({ x: e.pageX - myCanvas[0].offsetLeft, y: e.pageY - myCanvas[0].offsetTop });
+                })
+                .mousemove(function (e) {
+                    if (isDown != false) {
+                        if (coordinates.length < 200) {
+                            coordinates.push({ x: e.pageX - myCanvas[0].offsetLeft, y: e.pageY - myCanvas[0].offsetTop });
+                        }
+                        drawArray(coordinates, colorPicker.spectrum('get').toHexString(), sizeElement.slider("option", "value"));
                     }
-                    drawArray(coordinates, colorPicker.spectrum('get').toHexString(), sizeElement.slider( "option", "value" ));
-                }
-            });
-            
-            function drawArray(pointsArray, color, width) {
-                ctx.beginPath();
-                ctx.lineWidth = width;
-                ctx.strokeStyle = color;
-                ctx.moveTo(pointsArray[0].x, pointsArray[0].y);
-                for (var i = 1; i < pointsArray.length; i++) {
-                    ctx.lineTo(pointsArray[i].x, pointsArray[i].y);
-                }
-                ctx.stroke();
-                ctx.closePath();
-            };
+                });
 
-            // draw client count
-            function updateTextCount(count) {
-                usuariosLabel.text(count);
+                function drawArray(pointsArray, color, width) {
+                    ctx.beginPath();
+                    ctx.lineWidth = width;
+                    ctx.strokeStyle = color;
+                    ctx.moveTo(pointsArray[0].x, pointsArray[0].y);
+                    for (var i = 1; i < pointsArray.length; i++) {
+                        ctx.lineTo(pointsArray[i].x, pointsArray[i].y);
+                    }
+                    ctx.stroke();
+                    ctx.closePath();
+                };
+
+                // draw client count
+                function updateTextCount(count) {
+                    usuariosLabel.text(count);
+                }
+
+                // clear canvas
+                function clearCanvas() {
+                    ctx.clearRect(0, 0, myCanvas[0].width, myCanvas[0].height);
+                };
+
+                $("#clear").click(function () {
+                    clearCanvas();
+                });
+
+                // color picker
+                colorPicker.spectrum({
+                    color: "#e36",
+                    change: function (color) {
+                        ctx.strokeStyle = color.toHexString();
+                    }
+                });
+
+                // slider
+                $("#size").slider({
+                    orientation: "horizontal",
+                    range: "min",
+                    min: 1,
+                    max: 80,
+                    value: ctx.lineWidth
+                });
+
+                // enter key plugin
+                $.fn.pressEnter = function (fn) {
+
+                    return this.each(function () {
+                        $(this).bind('enterPress', fn);
+                        $(this).keyup(function (e) {
+                            if (e.keyCode == 13) {
+                                $(this).trigger("enterPress");
+                            }
+                        })
+                    });
+                };
+
+                // client chat code
+                // yes, you can 'hack' this thing
+                function chatAddMessage(name, message, color) {
+                    var msjBlock = $("<blockquote class='custom-quote " + color + "'>"
+                                + "<p><strong>" + message + "</strong></p>"
+                                + "<footer>" + name + "</footer>"
+                                + "</blockquote> ").hide();                    
+
+                    chatBox.append(msjBlock);
+
+                    msjBlock.fadeIn("fast");
+
+                    chatBox.animate({ scrollTop: chatBox[0].scrollHeight }, 1000);
+
+                    // lets change the color!
+                    colorHandler();
+                };
+
+                var color = "red";
+                function colorHandler() {
+                    if (color == "red") {
+                        color = "blue";
+                    }
+                    else {
+                        color = "red";
+                    }
+                };
+
+                // add to messages for testing
+                chatAddMessage("Console", "You can start typing down there :P", color);
+                chatAddMessage("Console", "I feel a strong disturbance in the force.", color);                             
+                
+                // Server connection
+                // SignalR code
+
+                $.connection.hub.logging = true;
+
+                var hub = $.connection.drawingBoard;
+                var connected = false;
+
+                hub.state.name = nombre;
+
+                textNombre.change(function (e) {
+                    nombre = textNombre.val();
+                    hub.state.name = nombre;
+                });
+
+                $(document).mouseup(function (e) {
+                    // prints a message to the javascript console
+                    $.connection.hub.log(JSON.stringify(coordinates));
+                    // it's 2 because i don't want an empty array to be sended to the server
+                    if (coordinates.length > 2) {
+                        hub.server.broadcastArray(coordinates, colorPicker.spectrum('get').toHexString(), sizeElement.slider("option", "value"));
+                    }
+                    isDown = false;
+                    coordinates.length = 0;
+                });
+
+                $("#clear").click(function () {
+                    if (connected) {
+                        hub.server.broadcastClear();
+                    }
+                });
+
+                function sendHelper() {
+                    var message = chatText.val();
+                    chatText.val("");
+
+                    if (message.length > 0) {
+                        chatAddMessage(nombre, message, color);
+                    }
+
+                    return message;
+                }
+
+                // chat handlers
+                chatBtn.click($.debounce(250, true, function (e) {
+                    var message = sendHelper();
+
+                    if (connected && message.length > 0) {
+                        hub.server.broadcastMessage(message);
+                    };
+                }));
+
+                chatText.pressEnter($.debounce(250, true, function () {
+                    var message = sendHelper();
+
+                    if (connected && message.length > 0) {
+                        hub.server.broadcastMessage(message);
+                    };
+                }));
+
+                // Event handlers
+                hub.client.clear = function () {
+                    clearCanvas();
+                };
+
+                hub.client.drawArray = function (array, dcolor, size) {
+                    drawArray(array, dcolor, size);
+                };
+
+                hub.client.updateClientCount = function (count) {
+                    updateTextCount(count);
+                };
+
+                hub.client.updateBoard = function (array) {
+                    array.forEach(function (element) {
+                        drawArray(element.points, element.color, element.size);
+                    });
+                };
+
+                hub.client.addMessage = function (name, message) {
+                    chatAddMessage(name, message, color);
+                };
+
+                // Starts the connection!
+                $.connection.hub.start()
+                .done(function () {
+                    connected = true;
+                });
             }
 
-            // clear canvas
-            function clearCanvas() {
-                ctx.clearRect(0, 0, myCanvas[0].width, myCanvas[0].height);                
-            };
-
-            $("#clear").click(function () {
-                clearCanvas();
-            });
-
-            // color picker
-            colorPicker.spectrum({
-                color: "#e36",
-                change: function (color) {                    
-                    ctx.strokeStyle = color.toHexString();
-                }
-            });
-
-            // slider
-            $("#size").slider({
-                orientation: "horizontal",
-                range: "min",
-                min: 1,
-                max: 80,
-                value: ctx.lineWidth
-            });
-
-            // signalR code
-            $.connection.hub.logging = true;
-
-            var hub = $.connection.drawingBoard;
-            var connected = false;
-            
-            $(document).mouseup(function (e) {
-                $.connection.hub.log(JSON.stringify(coordinates));
-                if (coordinates.length > 2) {
-                    hub.server.broadcastArray(coordinates, colorPicker.spectrum('get').toHexString(), sizeElement.slider("option", "value"));
-                }
-                isDown = false;
-                coordinates.length = 0;
-            });
-
-            $("#clear").click(function () {
-                if (connected) {
-                    hub.server.broadcastClear();
-                }
-            });
-
-            // Event handlers
-            hub.client.clear = function () {
-                clearCanvas();
-            };
-                        
-            hub.client.drawArray = function (array, dcolor, size) {
-                drawArray(array, dcolor, size);
-            };
-
-            hub.client.updateClientCount = function (count) {
-                updateTextCount(count);
-            };
-
-            hub.client.updateBoard = function (array){
-                array.forEach(function (element) {
-                    drawArray(element.points, element.color, element.size);
-                });
-            };
-
-            // Starts the connection!            
-            $.connection.hub.start()
-            .done(function () {
-                connected = true;
-            });
-        }
-
-    });
-</script>
+        });
+    </script>
 }
