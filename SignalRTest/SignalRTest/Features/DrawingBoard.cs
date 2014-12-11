@@ -13,6 +13,13 @@ namespace SignalRTest.Features
     {
         private static int _usersCount = 0;
         private static ConcurrentQueue<Line> _points = GetEmptyPoints();
+        private static ConcurrentQueue<Message> _messages = GetEmptyMessages();
+
+        private static ConcurrentQueue<Message> GetEmptyMessages()
+        {
+            var messages = new ConcurrentQueue<Message>();
+            return messages;
+        }
 
         private static ConcurrentQueue<Line> GetEmptyPoints()
         {
@@ -23,10 +30,16 @@ namespace SignalRTest.Features
         public override Task OnConnected()
         {
             Interlocked.Increment(ref _usersCount);
-            Task updatecount = Clients.All.UpdateClientCount(_usersCount);
-            Task listPoints = Clients.Caller.UpdateBoard(_points);
 
-            return updatecount.ContinueWith(_ => listPoints);
+            Task updatecount  =  Clients.All.UpdateClientCount(_usersCount);
+            Task clientConnected = Clients.Others.ClientConnected();
+            Task listPoints   =  Clients.Caller.UpdateBoard(_points);
+            Task listMessages =  Clients.Caller.UpdateChat(_messages);
+
+            return updatecount
+                .ContinueWith(_ => listPoints)
+                .ContinueWith(_ => clientConnected)
+                .ContinueWith(_ => listMessages);
         }
 
         public override Task OnDisconnected(bool stopCalled)
@@ -35,7 +48,11 @@ namespace SignalRTest.Features
             {
                 Interlocked.Decrement(ref _usersCount);
             }
-            return Clients.All.UpdateClientCount(_usersCount);
+
+            Task updatecount  =  Clients.All.UpdateClientCount(_usersCount);
+            Task clientDisconnected = Clients.All.ClientDisconnected();
+
+            return updatecount.ContinueWith(_ => clientDisconnected);
         }
         
         public Task BroadcastArray(List<Point> array, string color, short size)
@@ -60,6 +77,13 @@ namespace SignalRTest.Features
         {
             var name = Clients.Caller.name;
 
+            Message newMessage = new Message(){
+                Name = name,
+                mMessage = message
+            };
+
+            _messages.Enqueue(newMessage);
+
             return Clients.Others.AddMessage(name, message);
         }
     }
@@ -75,5 +99,11 @@ namespace SignalRTest.Features
     {
        public short x { get; set; }
        public short y { get; set; }
+    }
+
+    public class Message
+    {
+        public string Name { get; set; }
+        public string mMessage { get; set; }
     }
 }

@@ -21,62 +21,65 @@
     </style>
 }
 
-<div class="col-md-4">
-    <div class="panel panel-default">
-        <div class="panel-heading text-center">
-            <label>Options</label>
-        </div>
-        <div class="panel-body">
-            <form class="form-horizontal">
-                <div class="form-group col-md-8">
-                    <label class="control-label">Color:</label>
-                    <input type='text' id="color" />
-                </div>
-                <div class="form-group col-md-12">
-                    <label class="control-label">Brush size:</label>
-                    <div id="size"></div>
-                </div>
-                <div class="form-group col-md-8">
-                    <label class="control-label">Reset: </label>
-                    <div id="clear" class="btn btn-danger">Do it!</div>
-                </div>
-                <div class="form-group col-md-12">
-                    <div class="col-md-4">
-                        <label class="control-label">Name: </label>
-                    </div>
-                    <div class="col-md-8">
-                        <input type="text" class="form-control" id="nombre" />
-                    </div>
-                </div>
-            </form>
-        </div>
-        <div class="panel-footer">
-            <div class="form-group text-center" style="margin:0px;">
-                <label>Users connected: <span id="usuariosConectados">0</span></label>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="col-md-8">
-    <div class="panel panel-default">
-        <div class="panel-heading text-center">
-            <label>WOW, A CHAT!</label>
-        </div>
-        <div class="panel-body" style="padding:15px 0 15px 0;">
-            <div id="chat" class="container-fluid chat" style="margin-bottom:20px;">                  
-            </div>
-            <div class="col-md-10" style="padding-right:0px;">
-                <input type="text" id="textMessage" class="form-control" style="max-width:inherit; border-radius: 4px 0px 0px 4px;" />
-            </div>
-            <div class="col-md-2" style="padding-left:0px;">
-                <div id="sendMessage" class="btn btn-primary btn-block" style="border-radius: 0px 4px 4px 0px;">Enviar</div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <canvas id="testCanvas" width="1140" height="600"></canvas>
+
+<div class="container-fluid" style="margin-top:50px;">
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading text-center">
+                <label>Options</label>
+            </div>
+            <div class="panel-body">
+                <form class="form-horizontal">
+                    <div class="form-group col-md-8">
+                        <label class="control-label">Color:</label>
+                        <input type='text' id="color" />
+                    </div>
+                    <div class="form-group col-md-12">
+                        <label class="control-label">Brush size:</label>
+                        <div id="size"></div>
+                    </div>
+                    <div class="form-group col-md-8">
+                        <label class="control-label">Reset: </label>
+                        <div id="clear" class="btn btn-danger">Do it!</div>
+                    </div>
+                    <div class="form-group col-md-12">
+                        <div class="col-md-4">
+                            <label class="control-label">Name: </label>
+                        </div>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" id="nombre" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="panel-footer">
+                <div class="form-group text-center" style="margin:0px;">
+                    <label>Users connected: <span id="usuariosConectados">0</span></label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="panel panel-default">
+            <div class="panel-heading text-center">
+                <label>WOW, A CHAT!</label>
+            </div>
+            <div class="panel-body" style="padding:15px 0 15px 0;">
+                <div id="chat" class="container-fluid chat" style="margin-bottom:20px;">                  
+                </div>
+                <div class="col-md-10" style="padding-right:0px;">
+                    <input type="text" id="textMessage" class="form-control" style="max-width:inherit; border-radius: 4px 0px 0px 4px;" />
+                </div>
+                <div class="col-md-2" style="padding-left:0px;">
+                    <div id="sendMessage" class="btn btn-primary btn-block" style="border-radius: 0px 4px 4px 0px;">Enviar</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 @section scripts{
     <script src="@Url.Content("~/Content/spectrum/spectrum.js")"></script>    
@@ -105,7 +108,6 @@
                 var canvasX, canvasY;
                 ctx.lineWidth = 30;
                 ctx.lineJoin = ctx.lineCap = 'round';
-                ctx.strokeStyle = "#e36";
 
                 $(myCanvas)
                 .mousedown(function (e) {
@@ -147,9 +149,26 @@
                     clearCanvas();
                 });
 
+                // random color at first
+                var rand = Math.floor(Math.random() * 3) + 1;
+                var randColor;
+                switch(rand) {
+                    case 1:
+                        randColor = "#e33";
+                        break;
+                    case 2:
+                        randColor = "#3e3";
+                        break;
+                    case 3:
+                        randColor = "#33e";
+                        break;
+                    default:
+                        randColor = "#333";
+                }
+
                 // color picker
                 colorPicker.spectrum({
-                    color: "#e36",
+                    color: randColor,
                     change: function (color) {
                         ctx.strokeStyle = color.toHexString();
                     }
@@ -179,7 +198,7 @@
 
                 // client chat code
                 // yes, you can 'hack' this thing
-                function chatAddMessage(name, message, color) {
+                function chatAddMessage(name, message, color, scroll) {
                     var msjBlock = $("<blockquote class='custom-quote " + color + "'>"
                                 + "<p><strong>" + message + "</strong></p>"
                                 + "<footer>" + name + "</footer>"
@@ -189,10 +208,16 @@
 
                     msjBlock.fadeIn("fast");
 
-                    chatBox.animate({ scrollTop: chatBox[0].scrollHeight }, 1000);
+                    if (scroll == true) {
+                        scrollToBottomAnim();
+                    }
 
                     // lets change the color!
                     colorHandler();
+                };
+
+                function scrollToBottomAnim() {
+                    chatBox.animate({ scrollTop: chatBox[0].scrollHeight }, 1000);
                 };
 
                 var color = "red";
@@ -205,9 +230,31 @@
                     }
                 };
 
+                // check if windows has focus
+                var windowHasFocus = true;
+
+                $(window).focus(function () {
+                    windowHasFocus = true;
+                    document.title = "ASP.Net MVC - SignalR - Drawing board";
+                });
+
+                $(window).blur(function () {
+                    windowHasFocus = false;
+                });
+
+                // title handler
+                function titleHandler() {
+                    if (windowHasFocus == true) {
+                        document.title = "ASP.Net MVC - SignalR - Drawing board";
+                    }
+                    else {
+                        document.title = "Nuevo mensaje " + "ASP.Net MVC - SignalR - Drawing board";
+                    }
+                }
+
                 // add to messages for testing
-                chatAddMessage("Console", "You can start typing down there :P", color);
-                chatAddMessage("Console", "I feel a strong disturbance in the force.", color);                             
+                chatAddMessage("Console", "You can start typing down there :P", color, false);
+                chatAddMessage("Console", "I feel a strong disturbance in the force.", color, false);                             
                 
                 // Server connection
                 // SignalR code
@@ -246,7 +293,7 @@
                     chatText.val("");
 
                     if (message.length > 0) {
-                        chatAddMessage(nombre, message, color);
+                        chatAddMessage(nombre, message, color, true);
                     }
 
                     return message;
@@ -289,7 +336,23 @@
                 };
 
                 hub.client.addMessage = function (name, message) {
-                    chatAddMessage(name, message, color);
+                    chatAddMessage(name, message, color, true);
+                    titleHandler();
+                };
+
+                hub.client.clientConnected = function () {
+                    chatAddMessage("Console", "Someone has just connected", color, true);
+                };
+
+                hub.client.clientDisconnected = function () {
+                    chatAddMessage("Console", "Someone has just disconnected", color, true);
+                };
+
+                hub.client.updateChat = function (array) {
+                    array.forEach(function (element) {
+                        chatAddMessage(element.Name, element.mMessage, color, false);
+                    });
+                    scrollToBottomAnim();
                 };
 
                 // Starts the connection!
