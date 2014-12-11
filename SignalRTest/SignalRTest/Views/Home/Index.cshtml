@@ -123,6 +123,22 @@
                     }
                 });
 
+                // touch listeners
+                $(myCanvas)[0].addEventListener('touchstart', function (e) {
+                    e.preventDefault();
+                    isDown = true;
+                    coordinates.push({ x: e.touches[0].pageX - myCanvas[0].offsetLeft, y: e.touches[0].pageY - myCanvas[0].offsetTop });
+                }, false);
+
+                $(myCanvas)[0].addEventListener('touchmove', function (e) {
+                    if (isDown != false) {
+                        if (coordinates.length < 200) {
+                            coordinates.push({ x: e.touches[0].pageX - myCanvas[0].offsetLeft, y: e.touches[0].pageY - myCanvas[0].offsetTop });
+                        }
+                        drawArray(coordinates, colorPicker.spectrum('get').toHexString(), sizeElement.slider("option", "value"));
+                    }
+                }, false);
+
                 function drawArray(pointsArray, color, width) {
                     ctx.beginPath();
                     ctx.lineWidth = width;
@@ -271,6 +287,7 @@
                     hub.state.name = nombre;
                 });
 
+                // mouse listener
                 $(document).mouseup(function (e) {
                     // prints a message to the javascript console
                     $.connection.hub.log(JSON.stringify(coordinates));
@@ -281,6 +298,18 @@
                     isDown = false;
                     coordinates.length = 0;
                 });
+
+                // touch listener
+                $(myCanvas)[0].addEventListener('touchend', function (e) {
+                    // prints a message to the javascript console
+                    $.connection.hub.log(JSON.stringify(coordinates));
+                    // it's 2 because i don't want an empty array to be sended to the server
+                    if (coordinates.length > 2) {
+                        hub.server.broadcastArray(coordinates, colorPicker.spectrum('get').toHexString(), sizeElement.slider("option", "value"));
+                    }
+                    isDown = false;
+                    coordinates.length = 0;
+                }, false);
 
                 $("#clear").click(function () {
                     if (connected) {
