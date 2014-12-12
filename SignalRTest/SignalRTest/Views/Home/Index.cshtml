@@ -4,76 +4,85 @@
 
 @section styles{
     <style>
-        .chat{
-            height:200px;
-            overflow-y:auto;
+        .chat {
+            height: 200px;
+            overflow-y: auto;
         }
+
         .custom-quote {
             font-size: 14.5px;
             margin: 0 0 4px;
         }
+
         .blue {
             border-left: 5px solid #00aedb;
         }
+
         .red {
             border-left: 5px solid #d11141;
+        }
+
+        .spectrumReplacer {
+            border-radius: 4px;
+            background-color: #337ab7;
+            border: solid 1px #337ab7;
+            padding: 8px;
+            width:80px;
+        }
+
+        .spectrumReplacer:hover {
+            border: solid 1px #337ab7;
+        }
+
+        .sp-preview{
+            margin-left:15px;
+        }
+
+        .spectrumContainer {
+            border-radius: 4px;
+            background-color: #337ab7;
+            color: #ffffff;
         }
     </style>
 }
 
 <canvas id="testCanvas" width="1140" height="600"></canvas>
 
-<div class="container-fluid" style="margin-top:50px;">
-    <div class="col-md-4">
-        <div class="panel panel-default">
-            <div class="panel-heading text-center">
-                <label>Options</label>
-            </div>
+<div class="row">
+    <div class="container-fluid col-md-6 col-md-offset-3">
+        <div class="panel panel-default" style="margin-top: 0; border-radius: 0px 0px 4px 4px; background-color: #333; border-color: #333;">
             <div class="panel-body">
-                <form class="form-horizontal">
-                    <div class="form-group col-md-8">
-                        <label class="control-label">Color:</label>
-                        <input type='text' id="color" />
-                    </div>
-                    <div class="form-group col-md-12">
-                        <label class="control-label">Brush size:</label>
-                        <div id="size"></div>
-                    </div>
-                    <div class="form-group col-md-8">
-                        <label class="control-label">Reset: </label>
-                        <div id="clear" class="btn btn-danger">Do it!</div>
-                    </div>
-                    <div class="form-group col-md-12">
-                        <div class="col-md-4">
-                            <label class="control-label">Name: </label>
-                        </div>
-                        <div class="col-md-8">
-                            <input type="text" class="form-control" id="nombre" />
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="panel-footer">
-                <div class="form-group text-center" style="margin:0px;">
-                    <label>Users connected: <span id="usuariosConectados">0</span></label>
+                <div class="col-md-3">
+                    <input type='text' id="color" class="sp-dark" />
+                </div>
+                <div class="col-md-3">
+                    <div id="size" style="margin-top:15px;"></div>
+                </div>
+                <div class="col-md-3">
+                    <div id="clear" class="btn btn-primary btn-block">Reset</div>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="nombre" />
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="col-md-8">
+<div class="container-fluid" style="margin-top:50px;">
+    <div class="col-md-8 col-md-offset-2">
         <div class="panel panel-default">
             <div class="panel-heading text-center">
                 <label>WOW, A CHAT!</label>
             </div>
             <div class="panel-body" style="padding:15px 0 15px 0;">
-                <div id="chat" class="container-fluid chat" style="margin-bottom:20px;">                  
+                <div id="chat" class="container-fluid chat" style="margin-bottom:20px;">
                 </div>
                 <div class="col-md-10" style="padding-right:0px;">
                     <input type="text" id="textMessage" class="form-control" style="max-width:inherit; border-radius: 4px 0px 0px 4px;" />
                 </div>
                 <div class="col-md-2" style="padding-left:0px;">
-                    <div id="sendMessage" class="btn btn-primary btn-block" style="border-radius: 0px 4px 4px 0px;">Enviar</div>
+                    <div id="sendMessage" class="btn btn-primary btn-block" style="border-radius: 0px 4px 4px 0px;">Send</div>
                 </div>
             </div>
         </div>
@@ -82,7 +91,7 @@
 
 
 @section scripts{
-    <script src="@Url.Content("~/Content/spectrum/spectrum.js")"></script>    
+    <script src="@Url.Content("~/Content/spectrum/spectrum.js")"></script>
     <script src="~/Scripts/debounce.js"></script>
 
     <script type="text/javascript">
@@ -96,7 +105,7 @@
             var chatText = $("#textMessage");
             var textNombre = $("#nombre");
 
-            var nombre = "Anonymous.";
+            var nombre = "Anonymous";
             textNombre.val(nombre);
 
             myCanvas.css('background-color', '#333');
@@ -168,7 +177,7 @@
                 // random color at first
                 var rand = Math.floor(Math.random() * 3) + 1;
                 var randColor;
-                switch(rand) {
+                switch (rand) {
                     case 1:
                         randColor = "#e33";
                         break;
@@ -185,6 +194,8 @@
                 // color picker
                 colorPicker.spectrum({
                     color: randColor,
+                    replacerClassName: "spectrumReplacer",
+                    containerClassName: "spectrumContainer",
                     change: function (color) {
                         ctx.strokeStyle = color.toHexString();
                     }
@@ -218,7 +229,7 @@
                     var msjBlock = $("<blockquote class='custom-quote " + color + "'>"
                                 + "<p><strong>" + message + "</strong></p>"
                                 + "<footer>" + name + "</footer>"
-                                + "</blockquote> ").hide();                    
+                                + "</blockquote> ").hide();
 
                     chatBox.append(msjBlock);
 
@@ -270,8 +281,8 @@
 
                 // add to messages for testing
                 chatAddMessage("Console", "You can start typing down there :P", color, false);
-                chatAddMessage("Console", "I feel a strong disturbance in the force.", color, false);                             
-                
+                chatAddMessage("Console", "I feel a strong disturbance in the force.", color, false);
+
                 // Server connection
                 // SignalR code
 
